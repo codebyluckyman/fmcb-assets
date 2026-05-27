@@ -10,14 +10,19 @@ docs, infra, and tests live in the private repos.
 ## `fineract-provider-1.14.0-m4-pdfname.jar`
 
 Apache Fineract 1.14.0 rebuilt from upstream `apache/fineract@1.14.0`
-with one production patch:
+with two production patches, both in
+`ReadReportingServiceImpl.retrieveReportPDF`:
 
-- **`ReadReportingServiceImpl.retrieveReportPDF`** — report-name
-  validation regex relaxed from `^[a-zA-Z0-9_.-]+$` to
-  `^[a-zA-Z0-9_.\\- ]+$`, and the on-disk PDF filename collapses
-  whitespace to underscores. Lets reports with spaces in their names
-  (every CUA / BoG report we use) export to PDF. Path-traversal check
-  on the normalised `Path` still in place.
+1. **Report-name regex relaxed** from `^[a-zA-Z0-9_.-]+$` to
+   `^[a-zA-Z0-9_.\\- ]+$`; the on-disk filename collapses whitespace to
+   underscores. Lets reports with spaces in their names (every CUA /
+   BoG report we use) export to PDF. Path-traversal check on the
+   normalised `Path` still in place.
+2. **Cell-cast safety** — stock 1.14.0 does `(String) row.get(j)` on
+   every PDF table cell, which `ClassCastException`s the moment a
+   report has a numeric, date, or boolean column. Patched to
+   `String.valueOf(raw)` so any JDBC return type renders. Null cells
+   still skip cleanly.
 
 Deploy as `fineract-provider-1.14.0.jar` on FE1 + FE2 per the same
 recipe documented for prior assets — back up the existing JAR
